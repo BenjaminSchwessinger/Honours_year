@@ -8,7 +8,7 @@ set -vx
 
 #define the input and output directories
 INPUT=/short/sd34/ap5514/raw_data/Pst79_1_zipped
-OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/Pst79_1
+OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/Pst79_1_1d2
 
 #move data over to JOBFS
 
@@ -46,7 +46,7 @@ time full_1dsq_basecaller.py -i in -t 20 -k SQK-LSK308 -f FLO-MIN107 -s out_1d2 
 
 time tar czf Pst79_1_zipped_1d2_albacore2110.tar.gz out_1d2
 
-mv Pst79_10_1_zipped_1d2_albacore2110.tar.gz $OUTPUT
+mv Pst79_1_zipped_1d2_albacore2110.tar.gz $OUTPUT
 
 rm -r out_1d2   
 rm -r in
