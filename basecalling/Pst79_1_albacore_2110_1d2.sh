@@ -17,7 +17,12 @@ mkdir in
 mkdir out_1d
 mkdir out_1d2
 cd in
-cp -r $INPUT/* .
+var=($(ls ${INPUT} --sort=size))
+len=${#var[@]}
+for ((i=0;i<$len;i+2))
+do
+cp ${INPUT}/${var[i]} .
+done
 
 #now unzip all the files on the node
 for x in *.tar.gz
@@ -26,20 +31,13 @@ tar -xopzf ${x} &
 done
 wait
 
-#now remove all the tarziped files
+#now remove all the tarzipped files
 rm *.tar.gz
 
 #now do the basecalling 1D basecalling
 module load albacore/2.1.10
-
 cd $PBS_JOBFS
-#time read_fast5_basecaller.py -i in -t 36 -c r95_450bps_linear.cfg -s out_1d -r -o fastq -n 0 -q 0 --disable_pings
 
-#time tar czf Pst79_1_zipped_1d_albacore2110.tar.gz out_1d
-
-#mv Pst79_1_zipped_1d_albacore2110.tar.gz $OUTPUT
-
-#rm -r out_1d
 
 #now do the 1d2 basecalling
 time full_1dsq_basecaller.py -i in -t 20 -k SQK-LSK308 -f FLO-MIN107 -s out_1d2 -r -o fastq -n 0 -q 0 --disable_pings
