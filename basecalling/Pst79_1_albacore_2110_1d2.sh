@@ -19,7 +19,7 @@ mkdir out_1d2
 cd in
 var=($(ls ${INPUT} --sort=size))
 len=${#var[@]}
-for ((i=0;i<$len;i+2))
+for ((i=0; i<$len; i=i+2))
 do
 cp ${INPUT}/${var[i]} .
 done
