@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -P xf3
+#PBS -P sd34 
 #PBS -q normal 
 #PBS -l walltime=48:00:00
 #PBS -l mem=120GB
@@ -11,6 +11,7 @@ set -vx
 #define some variables at the start
 #give this job a name
 name=Pst79_run1-4_1d
+short=/short/sd34/ap5514
 ###
 INPUT=$short/basecalling/basecalled_albacore2110
 OUTPUT=$short/basecalling/quality_control
@@ -32,7 +33,7 @@ cd $PBS_JOBFS
 mkdir TAR_FILES
 
 
-cp Pst79_[1,2,3,4]/*tar.gz TAR_FILES/. # added basecall files
+cp ${INPUT}/Pst79_[1,2,3,4]/*tar.gz TAR_FILES/. # added basecall files
 
 
 mkdir GENOME
@@ -81,7 +82,7 @@ seqsum=$PBS_JOBFS/albacore_fastq/${name}_sequencing_summary.txt
 
 
 #just in case the original minin_QC.R script gets changed we port these changes
-rsync -P ${LANFEAR_SCRIPTS}/minion_QC.R minion_QC.R
+rsync -P ${LANFEAR_SCRIPTS}/MinionQC.R minion_QC.R
 
 module load R/3.4.0
 mkdir $outmqc
@@ -176,8 +177,8 @@ done
 
 cd ${PBS_JOBFS}
 
-cp $outmqc ${OUTPUT}/.
-cp $outminimap2 ${OUTPUT}/.
-cp $outngmlr ${OUTPUT}/.
-cp $outnano ${OUTPUT}/.
+cp -r $outmqc ${OUTPUT}/.
+cp -r $outminimap2 ${OUTPUT}/.
+cp -r $outngmlr ${OUTPUT}/.
+cp -r $outnano ${OUTPUT}/.
 
