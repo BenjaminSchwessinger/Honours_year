@@ -12,8 +12,8 @@ set -vx
 #give this job a name
 name=Pst79_run1-4_1d
 ###
-INPUT=$short/
-OUTPUT=$short/
+INPUT=$short/basecalling/basecalled_albacore2110
+OUTPUT=$short/basecalling/quality_control
 ASSEMBLY_BASE_FOLDER=$short/Pst_104_v13_assembly
 gff_file=Pst_104E_v13_ph_ctg.anno.gff3
 genome_file=Pst_104E_v13_ph_ctg.fa
@@ -32,14 +32,14 @@ cd $PBS_JOBFS
 mkdir TAR_FILES
 
 
-cp FIXHERE /*tar.gz TAR_FILES/.
+cp Pst79_[1,2,3,4]/*tar.gz TAR_FILES/. # added basecall files
 
 
 mkdir GENOME
 cp ${ASSEMBLY_BASE_FOLDER}/${gff_file} GENOME/.
 cp ${ASSEMBLY_BASE_FOLDER}/${genome_file} GENOME/.
 
-#go ahead with unziping and basecalling
+#go ahead with unzipping and basecalling
 cd TAR_FILES
 for x in *.tar.gz
 do
@@ -56,20 +56,20 @@ wait
 rm *.tar.gz
 
 
-#now caputre all the fastq for pass and fail seperately plus the summary file
+#now capture all the fastq for pass and fail separately plus the summary file
 cd $PBS_JOBFS
 
 mkdir albacore_fastq 
 cd albacore_fastq
 
-cat TAR_FILES/*/out_1d/workspace/fail/*.fastq > ${name}_fail.fastq
-cat TAR_FILES/*/out_1d/workspace/pass/*.fastq > ${name}_pass.fastq
-cat TAR_FILES/*/out_1d/sequencing_summary.txt  > ${name}_sequencing_summary.txt
+cat TAR_FILES/*/out_1d/workspace/fail/*.fastq >> ${name}_fail.fastq
+cat TAR_FILES/*/out_1d/workspace/pass/*.fastq >> ${name}_pass.fastq
+cat TAR_FILES/*/out_1d/sequencing_summary.txt >> ${name}_sequencing_summary.txt
 
 #remove TAR_FILES and zip up stuff
 cd $PBS_JOBS
 rm -r TAR_FILES
-tar -cvzf ${name}_albacore_output.tar.gz albacore_output
+tar -cvzf ${name}_albacore_output.tar.gz albacore_fastq
 mv ${name}_albacore_output.tar.gz ${OUTPUT}/.
 
 #quickly check we are in the right spot
@@ -105,24 +105,22 @@ date
 #mv all the ngmlr stats analysis
 #now make a bam file out of it
 
-FIX THIS
-module load samtools/1.4
-
-
+module load samtools/1.7
 module load java/jdk1.8.0_60
-module load nanoplot/1.0.0
-outnano=${PBS_JOBFS}/"nanoplot/"
-NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq --outdir $outnano --threads $threads --loglength
-NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq --outdir $outnano --threads $threads --loglength
+module load nanopack/1.0
+outnano=${PBS_JOBFS}/"nanopack/"
+time NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq --outdir $outnano --threads $threads --loglength
+time NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq --outdir $outnano --threads $threads --loglength
 
 for x in *.sam
 do
 samtools view -bS -@ $threads ${x} > ${x}.bam
 samtools sort -@ $threads ${x}.bam -o ${x}.out.bam
 samtools index ${x}.out.bam
-/home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_all/" -nt $threads -c --java-mem-size=$mem_size
-/home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
+time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_all/" -nt $threads -c --java-mem-size=$mem_size
+time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
 rm ${x}
+
 NanoPlot --bam ${x}.out.bam --outdir $outnano --threads $threads --loglength --prefix bam
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
@@ -140,7 +138,7 @@ done
 
 
 #Now map the reads with minimap2 to compare mapping with ngmlr.
-#maping with minmap2
+#mapping with minmap2
 outminimap2=${PBS_JOBFS}/"minimap2/"
 mkdir $outminimap2
 cd $outminimap2
@@ -159,9 +157,10 @@ do
 samtools view -bS -@ $threads ${x} > ${x}.bam
 samtools sort -@ $threads ${x}.bam -o ${x}.out.bam
 samtools index ${x}.out.bam
-/home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_all/" -nt $threads -c --java-mem-size=$mem_size
-/home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
+time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_all/" -nt $threads -c --java-mem-size=$mem_size
+time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
 rm ${x}
+
 NanoPlot --bam ${x}.out.bam --outdir $outnano --threads $threads --loglength --prefix bam
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
@@ -180,5 +179,5 @@ cd ${PBS_JOBFS}
 cp $outmqc ${OUTPUT}/.
 cp $outminimap2 ${OUTPUT}/.
 cp $outngmlr ${OUTPUT}/.
-
+cp $outnano ${OUTPUT}/.
 
