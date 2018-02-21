@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -P sd34 
 #PBS -q normal 
-#PBS -l walltime=48:00:00
+#PBS -l walltime=02:00:00
 #PBS -l mem=120GB
 #PBS -l ncpus=16
 #PBS -l jobfs=200GB
@@ -14,10 +14,10 @@ name=Pst79_run1-4_1d
 short=/short/sd34/ap5514
 ###
 INPUT=$short/basecalling/basecalled_albacore2110
-OUTPUT=$short/basecalling/quality_control/minimap_qc
+OUTPUT=$short/basecalling/quality_control/minimap_qc/Pst_104E_v13_p_ctg
 ASSEMBLY_BASE_FOLDER=$short/Pst_104_v13_assembly
-gff_file=Pst_104E_v13_ph_ctg.anno.gff3
-genome_file=Pst_104E_v13_ph_ctg.fa
+gff_file=Pst_104E_v13_p_ctg.anno.gff3
+genome_file=Pst_104E_v13_p_ctg.fa
 threads=16
 mem_size='120G'
 LANFEAR_SCRIPTS=/home/106/ap5514/myapps/minion_qc
@@ -119,8 +119,6 @@ done
 
 cd ${PBS_JOBFS}
 
-cp -r $outmqc ${OUTPUT}/.
 cp -r $outminimap2 ${OUTPUT}/.
-cp -r $outngmlr ${OUTPUT}/.
 cp -r $outnano ${OUTPUT}/.
 
