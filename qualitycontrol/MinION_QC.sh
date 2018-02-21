@@ -45,7 +45,8 @@ cd TAR_FILES
 for x in *.tar.gz
 do
 len=${#x}
-folder= ${x::len-7}
+folder=${x::len-7}
+mkdir ${folder}
 mv ${x} ${folder}/.
 cd ${folder} 
 tar -xopf ${x}&
@@ -54,7 +55,7 @@ done
 
 wait
 
-rm *.tar.gz
+rm */*.tar.gz
 
 
 #now capture all the fastq for pass and fail separately plus the summary file
@@ -63,12 +64,12 @@ cd $PBS_JOBFS
 mkdir albacore_fastq 
 cd albacore_fastq
 
-cat TAR_FILES/*/out_1d/workspace/fail/*.fastq >> ${name}_fail.fastq
-cat TAR_FILES/*/out_1d/workspace/pass/*.fastq >> ${name}_pass.fastq
-cat TAR_FILES/*/out_1d/sequencing_summary.txt >> ${name}_sequencing_summary.txt
+cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/fail/*.fastq >> ${name}_fail.fastq
+cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/pass/*.fastq >> ${name}_pass.fastq
+cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/sequencing_summary.txt >> ${name}_sequencing_summary.txt
 
 #remove TAR_FILES and zip up stuff
-cd $PBS_JOBS
+cd $PBS_JOBFS
 rm -r TAR_FILES
 tar -cvzf ${name}_albacore_output.tar.gz albacore_fastq
 mv ${name}_albacore_output.tar.gz ${OUTPUT}/.
@@ -87,7 +88,7 @@ rsync -P ${LANFEAR_SCRIPTS}/MinionQC.R minion_QC.R
 module load R/3.4.0
 mkdir $outmqc
 
-Rscript ./minion_QC.R $seqsum $outmqc
+Rscript ./minion_QC.R -i $seqsum -o $outmqc
 
 #now map with ngmlr
 # map with ngmlr
@@ -126,12 +127,12 @@ NanoPlot --bam ${x}.out.bam --outdir $outnano --threads $threads --loglength --p
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
 outbam=${x}.out.bam
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>1000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > stats_1k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>2000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > stats_2k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>10000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > stats_10k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>20000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > stats_20k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>100000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > stats_100k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>200000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > stats_200k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>1000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_1k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>2000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_2k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>10000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_10k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>20000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_20k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>100000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > ${x}.stats_100k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>200000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > ${x}.stats_200k.txt
 done
 
 
@@ -146,8 +147,10 @@ cd $outminimap2
 echo "Mapping with minimap2"
 date
 time 
-~/myapps/minimap2/minimap2/minimap2 -ax ava-ont ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_pass.minimap2.out.sam
-~/myapps/minimap2/minimap2/minimap2 -ax ava-ont ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_fail.minimap2.out.sam
+~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_pass.minimap2.out.sam
+~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_fail.minimap2.out.sam
+~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_pass.minimap2.out.paf
+~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_fail.minimap2.out.paf
 echo "Done mapping with minimap2"
 date
 
@@ -166,12 +169,12 @@ NanoPlot --bam ${x}.out.bam --outdir $outnano --threads $threads --loglength --p
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
 outbam=${x}.out.bam
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>1000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > stats_1k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>2000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > stats_2k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>10000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > stats_10k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>20000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > stats_20k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>100000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > stats_100k.txt
-samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>200000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > stats_200k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>1000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_1k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>2000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_2k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>10000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_10k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>20000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_20k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>100000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > ${x}.stats_100k.txt
+samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>200000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > ${x}.stats_200k.txt
 done
 #now move everything back to normal
 
