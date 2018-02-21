@@ -8,7 +8,7 @@ set -vx
 
 #define the input and output directories
 INPUT=/short/sd34/ap5514/raw_data/Pst79_1_zipped
-OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/Pst79_1_1d2
+OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/Pst79_1_1d2/1d2_2
 
 #move data over to JOBFS
 
@@ -19,7 +19,7 @@ mkdir out_1d2
 cd in
 var=($(ls ${INPUT} --sort=size))
 len=${#var[@]}
-for ((i=0; i<$len; i=i+2))
+for ((i=1; i<$len; i=i+3))
 do
 cp ${INPUT}/${var[i]} .
 done
@@ -48,6 +48,3 @@ mv Pst79_1_zipped_1d2_albacore2110.tar.gz $OUTPUT
 
 rm -r out_1d2   
 rm -r in
-
-
-
