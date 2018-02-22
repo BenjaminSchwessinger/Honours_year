@@ -90,6 +90,20 @@ mkdir $outmqc
 
 Rscript ./minion_QC.R -i $seqsum -o $outmqc
 
+
+
+module load samtools/1.7
+module load java/jdk1.8.0_60
+module load nanopack/1.0
+
+#now look at the input data with nanoplot
+outnano_raw=${PBS_JOBFS}/"nanopack/raw_data"
+time NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq --outdir ${outnano_raw} -p pass --threads $threads --loglength
+time NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq --outdir ${outnano_raw} -p fail --threads $threads --loglength
+
+#folder name for NanoPlot analysis on mapped data
+outnano_mapped=${PBS_JOBFS}/"nanopack/mapped"
+
 #now map with ngmlr
 # map with ngmlr
 outngmlr=$PBS_JOBFS/"ngmlr/"
@@ -104,15 +118,8 @@ echo "Done Mapping with ngmlr"
 date
 
 
-#mv all the ngmlr stats analysis
 #now make a bam file out of it
 
-module load samtools/1.7
-module load java/jdk1.8.0_60
-module load nanopack/1.0
-outnano=${PBS_JOBFS}/"nanopack/"
-time NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq --outdir $outnano --threads $threads --loglength
-time NanoPlot --fastq_rich ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq --outdir $outnano --threads $threads --loglength
 
 for x in *.sam
 do
@@ -123,7 +130,7 @@ time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -o
 time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
 rm ${x}
 
-NanoPlot --bam ${x}.out.bam --outdir $outnano --threads $threads --loglength --prefix bam
+NanoPlot --bam ${x}.out.bam --outdir $outnano_mapped --threads $threads --loglength --prefix ${x}
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
 outbam=${x}.out.bam
