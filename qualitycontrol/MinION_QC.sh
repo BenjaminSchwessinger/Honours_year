@@ -33,7 +33,7 @@ cd $PBS_JOBFS
 mkdir TAR_FILES
 
 
-cp ${INPUT}/Pst79_[1,2,3,4]/*tar.gz TAR_FILES/. # added basecall files
+cp ${INPUT}/Pst79_[1,2,3,4]/*tar.gz TAR_FILES/. # added basecall files to the node
 
 
 mkdir GENOME
@@ -153,11 +153,11 @@ mkdir $outminimap2
 cd $outminimap2
 echo "Mapping with minimap2"
 date
-time 
-~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_pass.minimap2.out.sam
-~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_fail.minimap2.out.sam
-~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_pass.minimap2.out.paf
-~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq ${PBS_JOBFS}/GENOME/${genome_file} > ${name}_fail.minimap2.out.paf
+time #changed below to have reference before fastq 
+~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.sam
+~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.sam
+~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.paf
+~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.paf
 echo "Done mapping with minimap2"
 date
 
