@@ -14,7 +14,7 @@ name=Pst79_run1-4_1d
 short=/short/sd34/ap5514
 ###
 INPUT=$short/basecalling/basecalled_albacore2110
-OUTPUT=$short/basecalling/quality_control
+OUTPUT=$short/basecalling/quality_control/1d_all_qc
 ASSEMBLY_BASE_FOLDER=$short/Pst_104_v13_assembly
 gff_file=Pst_104E_v13_ph_ctg.anno.gff3
 genome_file=Pst_104E_v13_ph_ctg.fa
@@ -154,8 +154,8 @@ cd $outminimap2
 echo "Mapping with minimap2"
 date
 time #changed below to have reference before fastq 
-~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.sam
-~/myapps/minimap2/minimap2/minimap2 -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.sam
+~/myapps/minimap2/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq | samtools sort -@ $threads -O BAM -o ${name}_pass.minimap2.out.bam
+~/myapps/minimap2/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq | samtools sort -@ $threads -O BAM -o ${name}_fail.minimap2.out.sam
 ~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.paf
 ~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.paf
 echo "Done mapping with minimap2"
@@ -163,19 +163,17 @@ date
 
 
 
-for x in *.sam
+for x in *.bam
 do
-samtools view -bS -@ $threads ${x} > ${x}.bam
-samtools sort -@ $threads ${x}.bam -o ${x}.out.bam
-samtools index ${x}.out.bam
-time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_all/" -nt $threads -c --java-mem-size=$mem_size
-time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x}.out.bam -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
-rm ${x}
+samtools index ${x}
+time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x} -outdir ${PBS_JOBFS}/"qualimap_all/" -nt $threads -c --java-mem-size=$mem_size
+time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x} -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
 
-NanoPlot --bam ${x}.out.bam --outdir $outnano --threads $threads --loglength --prefix bam
+
+NanoPlot --bam ${x} --outdir $outnano --threads $threads --loglength --prefix ${x}
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
-outbam=${x}.out.bam
+outbam=${x}
 samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>1000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_1k.txt
 samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>2000)){print $0}}' |  samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_2k.txt
 samtools view -h $outbam |     awk -F'\t' '{if((/^@/) || (length($10)>10000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_10k.txt
