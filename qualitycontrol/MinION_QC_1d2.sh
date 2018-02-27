@@ -154,10 +154,10 @@ cd $outminimap2
 echo "Mapping with minimap2"
 date
 time #changed below to have reference before fastq 
-~/myapps/minimap2/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq | samtools sort -@ $threads -O BAM -o ${name}_pass.minimap2.out.bam
-~/myapps/minimap2/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq | samtools sort -@ $threads -O BAM -o ${name}_fail.minimap2.out.sam
-~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.paf
-~/myapps/minimap2/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.paf
+~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq | samtools sort -@ $threads -O BAM -o ${name}_pass.minimap2.out.bam
+~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq | samtools sort -@ $threads -O BAM -o ${name}_fail.minimap2.out.bam
+~/myapps/minimap2/v2.7/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.paf
+~/myapps/minimap2/v2.7/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.paf
 echo "Done mapping with minimap2"
 date
 
