@@ -170,7 +170,7 @@ time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x} -outdir ${
 time /home/106/ap5514/myapps/qualimap_v2.2.1/qualimap bamqc -bam ${x} -outdir ${PBS_JOBFS}/"qualimap_gff/" -gff ${PBS_JOBFS}/GENOME/${gff_file} -nt $threads -c --java-mem-size=$mem_size
 
 
-NanoPlot --bam ${x} --outdir $outnano --threads $threads --loglength --prefix ${x}
+NanoPlot --bam ${x} --outdir $outnano_mapped --threads $threads --loglength --prefix ${x}
 
 # stats on reads > various length (thanks to @gringer here: https://bioinformatics.stackexchange.com/questions/678/get-the-mapping-statistics-of-a-single-read-$
 outbam=${x}
@@ -188,5 +188,5 @@ cd ${PBS_JOBFS}
 cp -r $outmqc ${OUTPUT}/.
 cp -r $outminimap2 ${OUTPUT}/.
 cp -r $outngmlr ${OUTPUT}/.
-cp -r $outnano ${OUTPUT}/.
+cp -r $outnano_mapped ${OUTPUT}/.
 
