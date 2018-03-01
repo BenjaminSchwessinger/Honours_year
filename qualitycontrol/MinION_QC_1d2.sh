@@ -33,7 +33,7 @@ cd $PBS_JOBFS
 mkdir TAR_FILES
 
 
-cp ${INPUT}/Pst79_[1]/*tar.gz TAR_FILES/. # added basecall files to the node. only one file
+#cp ${INPUT}/Pst79_1_1d2/*tar.gz TAR_FILES/. # added basecall files to the node.
 
 
 mkdir GENOME
@@ -42,14 +42,16 @@ cp ${ASSEMBLY_BASE_FOLDER}/${genome_file} GENOME/.
 
 #go ahead with unzipping and basecalling
 cd TAR_FILES
-for x in *.tar.gz
+for x in ${INPUT}/Pst79_1_1d2/*tar.gz
 do
 len=${#x}
-folder=${x::len-7}
+folder=${x:len-25:len-7} # get rid of path infront of name
 mkdir ${folder}
-mv ${x} ${folder}/.
+cp ${x} ${folder}/.
 cd ${folder} 
-tar -xopf ${x}&
+tar -xopf  ${x} && rm -r ./out_1d2/workspace # remove fast5 filse at the same time
+# tar -xopf  ${x} # removed fork so one basecall file runs at a time, since the files are huge.
+# rm -r ./out_1d2/workspace # to prevent fast5 files from filling up data
 cd $PBS_JOBFS/TAR_FILES
 done
 
@@ -64,9 +66,9 @@ cd $PBS_JOBFS
 mkdir albacore_fastq 
 cd albacore_fastq
 
-cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/fail/*.fastq >> ${name}_fail.fastq
-cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/pass/*.fastq >> ${name}_pass.fastq
-cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/sequencing_summary.txt >> ${name}_sequencing_summary.txt
+cat ${PBS_JOBFS}/TAR_FILES/*/out_1d2/1dsq_analysis/workspace/fail/*.fastq >> ${name}_fail.fastq
+cat ${PBS_JOBFS}/TAR_FILES/*/out_1d2/1dsq_analysis/workspace/pass/*.fastq >> ${name}_pass.fastq
+cat ${PBS_JOBFS}/TAR_FILES/*/out_1d2/1dsq_analysis/sequencing_1dsq_summary.txt >> ${name}_sequencing_summary.txt
 
 #remove TAR_FILES and zip up stuff
 cd $PBS_JOBFS
