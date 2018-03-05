@@ -48,13 +48,13 @@ folder=${x:len-35:len-8} #make proper folder names but could not get rid of "len
 mkdir ${folder}
 mv ${x} ${folder}/.
 cd ${folder} 
-tar -xopf ${x}&
+gunzip ${x}&
 cd $PBS_JOBFS/TAR_FILES
 done
 
 wait
 
-rm */*.tar.gz
+rm */*.fastq.gz
 
 
 #now capture all the fastq for pass and fail separately plus the summary file
@@ -63,33 +63,21 @@ cd $PBS_JOBFS
 mkdir albacore_fastq 
 cd albacore_fastq
 
+							### not sure about this part
+
 cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/fail/*.fastq >> ${name}_fail.fastq
 cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/pass/*.fastq >> ${name}_pass.fastq
 cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/sequencing_summary.txt >> ${name}_sequencing_summary.txt
+
+#cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/fail/*.fastq >> ${name}_fail.fastq
+#cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/workspace/pass/*.fastq >> ${name}_pass.fastq
+#cat ${PBS_JOBFS}/TAR_FILES/*/out_1d/sequencing_summary.txt >> ${name}_sequencing_summary.txt
 
 #remove TAR_FILES and zip up stuff
 cd $PBS_JOBFS
 rm -r TAR_FILES
 tar -cvzf ${name}_albacore_output.tar.gz albacore_fastq
 mv ${name}_albacore_output.tar.gz ${OUTPUT}/.
-
-#quickly check we are in the right spot
-#run minion qc script
-# minion QC
-echo "Running MinION QC R script"
-outmqc=$PBS_JOBFS/"minionQC"
-seqsum=$PBS_JOBFS/albacore_fastq/${name}_sequencing_summary.txt
-
-
-#just in case the original minin_QC.R script gets changed we port these changes
-rsync -P ${LANFEAR_SCRIPTS}/MinionQC.R minion_QC.R
-
-module load R/3.4.0
-mkdir $outmqc
-
-Rscript ./minion_QC.R -i $seqsum -o $outmqc
-
-
 
 module load samtools/1.7
 module load java/jdk1.8.0_60
@@ -111,8 +99,8 @@ cd $outngmlr
 echo "Mapping with ngmlr"
 date
 
-time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r ${PBS_JOBFS}/GENOME/${genome_file} -q ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq -o ${name}_pass.ngmlr.out.sam -x ont
-time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r ${PBS_JOBFS}/GENOME/${genome_file} -q ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq -o ${name}_fail.ngmlr.out.sam -x ont
+time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r ${PBS_JOBFS}/GENOME/${genome_file} -q ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq -o ${name}_pass.ngmlr.out.sam
+time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r ${PBS_JOBFS}/GENOME/${genome_file} -q ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq -o ${name}_fail.ngmlr.out.sam
 echo "Done Mapping with ngmlr"
 date
 
@@ -153,10 +141,10 @@ cd $outminimap2
 echo "Mapping with minimap2"
 date
 time #changed below to have reference before fastq 
-~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq | samtools sort -@ $threads -O BAM -o ${name}_pass.minimap2.out.bam
-~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -ax map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq | samtools sort -@ $threads -O BAM -o ${name}_fail.minimap2.out.bam
-~/myapps/minimap2/v2.7/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.paf
-~/myapps/minimap2/v2.7/minimap2/minimap2 -x map-ont ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.paf
+~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -ax map-pb ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq | samtools sort -@ $threads -O BAM -o ${name}_pass.minimap2.out.bam
+~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -ax map-pb ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq | samtools sort -@ $threads -O BAM -o ${name}_fail.minimap2.out.bam
+~/myapps/minimap2/v2.7/minimap2/minimap2 -x map-pb ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_pass.fastq > ${name}_pass.minimap2.out.paf
+~/myapps/minimap2/v2.7/minimap2/minimap2 -x map-pb ${PBS_JOBFS}/GENOME/${genome_file} ${PBS_JOBFS}/albacore_fastq/${name}_fail.fastq > ${name}_fail.minimap2.out.paf
 echo "Done mapping with minimap2"
 date
 
