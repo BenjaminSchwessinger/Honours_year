@@ -4,7 +4,7 @@
 #PBS -l walltime=48:00:00
 #PBS -l mem=120GB
 #PBS -l ncpus=16
-#PBS -l jobfs=200GB
+#PBS -l jobfs=420GB
 
 set -vx
 
@@ -49,9 +49,10 @@ folder=${x:len-25:len-7} # get rid of path infront of name
 mkdir ${folder}
 cp ${x} ${folder}/.
 cd ${folder} 
-tar -xopf  ${x} && rm -r ./out_1d2/workspace # remove fast5 filse at the same time
-# tar -xopf  ${x} # removed fork so one basecall file runs at a time, since the files are huge.
-# rm -r ./out_1d2/workspace # to prevent fast5 files from filling up data
+tar -xopf  ${x} # removed fork so one basecall file runs at a time, since the files are huge.
+rm -r ./out_1d2/workspace # to prevent fast5 files from filling up data
+rm -r *.fast5 # delete unzipped fast5 in case they're in the current directory
+rm -r *.tar.gz # delete tar.gz files early so they don't take up JOBFS space
 cd $PBS_JOBFS/TAR_FILES
 done
 
