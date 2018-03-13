@@ -13,7 +13,7 @@ set -vx
 name=PacBio
 short=/short/sd34/ap5514
 ###
-INPUT=$short/raw_data/pacbio_fastq
+INPUT=$short/raw_data/pacbio_fastq/PacBio.fastq.gz # added concatenated file, as nci job couldn't catenate individual fastq.gz
 OUTPUT=$short/basecalling/quality_control/PacBio
 ASSEMBLY_BASE_FOLDER=$short/Pst_104_v13_assembly
 gff_file=Pst_104E_v13_ph_ctg.anno.gff3
@@ -32,8 +32,8 @@ cd $PBS_JOBFS
 mkdir FQ_GZ_FILES
 
 
-cp ${INPUT}/*fastq.gz FQ_GZ_FILES/. # added basecall files to the node
-cat FQ_GZ_FILES/* >> ${name}.fastq.gz # catenate all PacBio reads
+cp ${INPUT} FQ_GZ_FILES/. # added basecall files to the node
+# cat FQ_GZ_FILES/* >> ${name}.fastq.gz # catenate all PacBio reads
 
 mkdir GENOME
 cp ${ASSEMBLY_BASE_FOLDER}/${gff_file} GENOME/.
