@@ -61,7 +61,7 @@ cd $outngmlr
 echo "Mapping with ngmlr"
 date
 
-time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r ${PBS_JOBFS}/GENOME/${genome_file} -q ${PBS_JOBFS}/FQ_GZ_FILES/${name}.fastq.gz -o ${name}_.ngmlr.out.sam
+time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r ${PBS_JOBFS}/GENOME/${genome_file} -q ${PBS_JOBFS}/FQ_GZ_FILES/${name}.fastq.gz -o ${name}.ngmlr.out.sam
 echo "Done Mapping with ngmlr"
 date
 
@@ -138,7 +138,6 @@ done
 
 cd ${PBS_JOBFS}
 
-cp -r $outmqc ${OUTPUT}/.
 cp -r $outminimap2 ${OUTPUT}/.
 cp -r $outngmlr ${OUTPUT}/.
 cp -r $outnano_mapped ${OUTPUT}/.
