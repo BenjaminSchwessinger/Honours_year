@@ -82,8 +82,9 @@ cd $out_index
 /short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish index -d $PBS_JOBFS_fast5 $PBS_JOBFS_fastq 
 #We get the following files: albacore_output.fastq.index, albacore_output.fastq.index.fai, albacore_output.fastq.index.gzi, and albacore_output.fastq.index.readdb 
 
-###maybe move output files to index folder, as they were automatically sent to the fastq folder
-rsync -av --exclude='$PBS_JOBFS_fastq' ../fastq .
+#move output files to index folder, as they were automatically sent to the fastq folder
+rsync -av --exclude='$PBS_JOBFS_fastq' ../fastq . 
+#doesn't do it right, so need to manually move to index 
 #copy to short
 cp -r $out_index ${OUTPUT}/.
 
@@ -91,7 +92,7 @@ cp -r $out_index ${OUTPUT}/.
 
 #map reads to reference assembly and save as bam file
 ######## add minimap filepath, add BAM files
-out_minimap2=${PBS_JOBFS}/"minimap2/"
+out_minimap2=${PBS_JOBFS}/"minimap2"
 mkdir $out_minimap2
 cd $out_minimap2
 ~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -a -x map-ont $PBS_JOBFS_ref $PBS_JOBFS_fastq | samtools sort -T tmp -o ${name}.sorted.bam
@@ -103,10 +104,10 @@ cp -r $out_minimap2 ${OUTPUT}/.
 #
 
 #call methylation and save to tsv file with log likelihood ratio
-out_methyl=${PBS_JOBFS}/"methyl/"
+out_methyl=${PBS_JOBFS}/"methyl"
 mkdir $out_methyl
 cd $out_methyl
-/short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish call-methylation -t $threads -r $PBS_JOBFS_fastq -b ${name}.sorted.bam -g $PBS_JOBFS_ref > ${name}_methylation_calls.tsv
+/short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish call-methylation -t $threads -r $PBS_JOBFS_fastq -b $out_minimap2/${name}.sorted.bam -g $PBS_JOBFS_ref > ${name}_methylation_calls.tsv
 
 #copy to short
 cp -r $out_methyl ${OUTPUT}/.
@@ -115,10 +116,10 @@ cp -r $out_methyl ${OUTPUT}/.
 
 
 #helper script to make tsv file showing how often each reference position was methylated
-out_mfreq=${PBS_JOBFS}/"mfreq/"
+out_mfreq=${PBS_JOBFS}/"mfreq"
 mkdir $out_mfreq
 cd $out_mfreq
-/short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/scripts/calculate_methylation_frequency.py -i methylation_calls.tsv > ${name}_methylation_frequency.tsv
+/short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/scripts/calculate_methylation_frequency.py -i ${out_methyl}/${name}_methylation_calls.tsv > ${name}_methylation_frequency.tsv
 
 #copy to short
 cp -r $out_mfreq ${OUTPUT}/.
@@ -126,4 +127,4 @@ cp -r $out_mfreq ${OUTPUT}/.
 #
 
 #delete folders in jobfs 
-rm -rf ${PBS_JOBFS} 
+rm -rf ${PBS_JOBFS}/* 
