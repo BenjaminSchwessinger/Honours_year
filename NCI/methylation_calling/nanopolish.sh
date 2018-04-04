@@ -20,15 +20,15 @@ short=/short/sd34/ap5514
 input=$short/methylation_calling/input
 contig=pcontig_019
 
-PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${contig}_aln.fastq
+PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${contig}_reads.fastq
 PBS_JOBFS_fast5=$PBS_JOBFS/fast5/${contig}_aln_fast5.tar.gz
 PBS_JOBFS_ref=$PBS_JOBFS/ref/ref_${contig}.fasta
 
-albacore_output_fastq=$input/pcontig_019_aln.fastq
+albacore_output_fastq=$input/pcontig_019_reads.fastq
 fast5_files=$input/pcontig_019_aln_fast5.tar.gz
 reference_fasta=$input/ref_pcontig_019.fasta
 
-OUTPUT=$input/$name/nanopolish
+OUTPUT=$input/${name}_output/nanopolish
 
 threads=16
 mem_size='120G'
@@ -83,23 +83,39 @@ cd $out_index
 #We get the following files: albacore_output.fastq.index, albacore_output.fastq.index.fai, albacore_output.fastq.index.gzi, and albacore_output.fastq.index.readdb 
 
 #move output files to index folder, as they were automatically sent to the fastq folder
-rsync -av --exclude='$PBS_JOBFS_fastq' ../fastq . 
-#doesn't do it right, so need to manually move to index 
+cp ../fastq/!(${contig}_reads.fastq) . 
 #copy to short
 cp -r $out_index ${OUTPUT}/.
 
 #
 
 #map reads to reference assembly and save as bam file
-######## add minimap filepath, add BAM files
 out_minimap2=${PBS_JOBFS}/"minimap2"
 mkdir $out_minimap2
 cd $out_minimap2
-~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -a -x map-ont $PBS_JOBFS_ref $PBS_JOBFS_fastq | samtools sort -T tmp -o ${name}.sorted.bam
-samtools index ${name}.sorted.bam
-
+echo "Mapping with minimap2"
+date
+time ~/myapps/minimap2/v2.7/minimap2/minimap2 -t $threads -a -x map-ont $PBS_JOBFS_ref $PBS_JOBFS_fastq | samtools sort -@ $threads -O BAM -o ${name}.minimap2.sorted.bam
+echo "Done Mapping with minimap2"
+date
+samtools index ${name}.minimap2.sorted.bam
 #copy to short
 cp -r $out_minimap2 ${OUTPUT}/.
+
+#
+
+# map with ngmlr
+out_ngmlr=$PBS_JOBFS/"ngmlr/"
+mkdir $out_ngmlr
+cd $out_ngmlr
+echo "Mapping with ngmlr"
+date
+time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r $PBS_JOBFS_ref -q $PBS_JOBFS_fastq  -x ont | samtools sort -@ $threads -O BAM -o ${name}_pass.ngmlr.sorted.bam
+echo "Done Mapping with ngmlr"
+date
+
+#copy to short
+cp -r $out_ngmlr ${OUTPUT}/.
 
 #
 
@@ -107,19 +123,20 @@ cp -r $out_minimap2 ${OUTPUT}/.
 out_methyl=${PBS_JOBFS}/"methyl"
 mkdir $out_methyl
 cd $out_methyl
-/short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish call-methylation -t $threads -r $PBS_JOBFS_fastq -b $out_minimap2/${name}.sorted.bam -g $PBS_JOBFS_ref > ${name}_methylation_calls.tsv
+time /short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish call-methylation -t $threads -r $PBS_JOBFS_fastq -b $out_minimap2/${name}.minimap2.sorted.bam -g $PBS_JOBFS_ref > ${name}_methylation_calls_minimap2.tsv
+time /short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish call-methylation -t $threads -r $PBS_JOBFS_fastq -b $out_ngmlr/${name}.ngmlr.sorted.bam -g $PBS_JOBFS_ref > ${name}_methylation_calls_ngmlr.tsv
 
 #copy to short
 cp -r $out_methyl ${OUTPUT}/.
 
 #
 
-
 #helper script to make tsv file showing how often each reference position was methylated
 out_mfreq=${PBS_JOBFS}/"mfreq"
 mkdir $out_mfreq
 cd $out_mfreq
-/short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/scripts/calculate_methylation_frequency.py -i ${out_methyl}/${name}_methylation_calls.tsv > ${name}_methylation_frequency.tsv
+time /short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/scripts/calculate_methylation_frequency.py -i ${out_methyl}/${name}_methylation_calls_minimap2.tsv -s > ${name}_methylation_frequency_minimap2.tsv
+time /short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/scripts/calculate_methylation_frequency.py -i ${out_methyl}/${name}_methylation_calls_ngmlr.tsv -s > ${name}_methylation_frequency_ngmlr.tsv
 
 #copy to short
 cp -r $out_mfreq ${OUTPUT}/.
