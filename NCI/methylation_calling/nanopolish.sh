@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -P sd34
-#PBS -q express 
+#PBS -q express
 #PBS -l walltime=24:00:00
 #PBS -l mem=120GB
 #PBS -l ncpus=16
@@ -20,15 +20,15 @@ short=/short/sd34/ap5514
 input=$short/methylation_calling/input
 contig=pcontig_019
 
-PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${contig}_reads.fastq
+PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${contig}_aln.fastq
 PBS_JOBFS_fast5=$PBS_JOBFS/fast5/${contig}_aln_fast5.tar.gz
 PBS_JOBFS_ref=$PBS_JOBFS/ref/ref_${contig}.fasta
 
-albacore_output_fastq=$input/pcontig_019_reads.fastq
+albacore_output_fastq=$input/pcontig_019_aln.fastq
 fast5_files=$input/pcontig_019_aln_fast5.tar.gz
 reference_fasta=$input/ref_pcontig_019.fasta
 
-OUTPUT=$input/${name}_output/nanopolish
+OUTPUT=$input/${name}_mc/nanopolish
 
 threads=16
 mem_size='120G'
@@ -82,8 +82,9 @@ cd $out_index
 /short/sd34/ap5514/myapps/nanopolish/0.9.0/bin/nanopolish/nanopolish index -d $PBS_JOBFS_fast5 $PBS_JOBFS_fastq 
 #We get the following files: albacore_output.fastq.index, albacore_output.fastq.index.fai, albacore_output.fastq.index.gzi, and albacore_output.fastq.index.readdb 
 
-#move output files to index folder, as they were automatically sent to the fastq folder
-cp ../fastq/!(${contig}_reads.fastq) . 
+#copy output files to index folder, as they were automatically sent to the fastq folder
+cp  ../fastq/* . 
+rm ${contig}_aln.fastq #delete fastq file that was also copied over to index folder	
 #copy to short
 cp -r $out_index ${OUTPUT}/.
 
@@ -105,15 +106,15 @@ cp -r $out_minimap2 ${OUTPUT}/.
 #
 
 # map with ngmlr
-out_ngmlr=$PBS_JOBFS/"ngmlr/"
+out_ngmlr=$PBS_JOBFS/"ngmlr"
 mkdir $out_ngmlr
 cd $out_ngmlr
 echo "Mapping with ngmlr"
 date
-time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r $PBS_JOBFS_ref -q $PBS_JOBFS_fastq  -x ont | samtools sort -@ $threads -O BAM -o ${name}_pass.ngmlr.sorted.bam
+time /home/106/ap5514/myapps/ngmlr/bin/ngmlr-0.2.6/ngmlr -t ${threads} -r $PBS_JOBFS_ref -q $PBS_JOBFS_fastq  -x ont | samtools sort -@ $threads -O BAM -o ${name}.ngmlr.sorted.bam
 echo "Done Mapping with ngmlr"
 date
-
+samtools index ${name}.ngmlr.sorted.bam
 #copy to short
 cp -r $out_ngmlr ${OUTPUT}/.
 
