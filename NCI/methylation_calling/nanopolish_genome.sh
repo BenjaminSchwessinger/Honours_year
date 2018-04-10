@@ -1,10 +1,10 @@
 #!/bin/bash
 #PBS -P sd34
-#PBS -q express
-#PBS -l walltime=24:00:00
-#PBS -l mem=120GB
+#PBS -q normal 
+#PBS -l walltime=48:00:00
+#PBS -l mem=128GB
 #PBS -l ncpus=16
-#PBS -l jobfs=200GB
+#PBS -l jobfs=420GB
 
 set -vx
 
