@@ -7,7 +7,7 @@
 set -vx
 
 #define the input and output directories
-seqrun=Pst79_4b
+seqrun=Pst79_4
 INPUT=/short/sd34/ap5514/raw_data/${seqrun}_zipped
 OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/${seqrun}
 
@@ -44,7 +44,7 @@ module load albacore/2.1.10
 cd $PBS_JOBFS
 time read_fast5_basecaller.py -i in -t 36 -c r95_450bps_linear.cfg -s out_1d -r -o fastq,fast5 -n 0 -q 0 --disable_pings
 
-time tar -czf $OUTPUT/${seqrun}_1d_albacore2110.tar.gz out_1d
+time tar -czf $OUTPUT/Pst79_4b_1d_albacore2110.tar.gz out_1d
 
 rm -r out_1d
 
