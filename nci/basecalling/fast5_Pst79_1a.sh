@@ -41,7 +41,7 @@ module load albacore/2.1.10
 cd $PBS_JOBFS
 time read_fast5_basecaller.py -i in -t 36 -c r95_450bps_linear.cfg -s out_1d -r -o fastq,fast5 -n 0 -q 0 --disable_pings
 
-time tar -czf $OUTPUT/${seqrun}_1d_albacore2110.tar.gz out_1d
+time tar -czf $OUTPUT/Pst79_1a_1d_albacore2110.tar.gz out_1d
 
 rm -r out_1d
 rm -r in
