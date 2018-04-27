@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -P sd34
 #PBS -q normal
-#PBS -l walltime=24:00:00
-#PBS -l mem=128GB
+#PBS -l walltime=6:00:00
+#PBS -l mem=120GB
 #PBS -l ncpus=16
 #PBS -l jobfs=200GB
 
@@ -17,7 +17,7 @@ short=/short/sd34/ap5514
 ###
 
 #INPUTS
-input=$short/methylation_calling/input/test_pcontig_019/input
+input=$short/methylation_calling/input/contig_019/
 
 albacore_output_fastq=$input/pcontig_019_aln.fastq
 fast5_dir=$input/pcontig_019_aln_fast5.tar.gz
@@ -27,10 +27,10 @@ PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${name}_aln.fastq
 PBS_JOBFS_fast5=$PBS_JOBFS/fast5/${name}_aln_fast5.tar.gz
 PBS_JOBFS_ref=$PBS_JOBFS/ref/ref_${name}.fasta
 
-OUTPUT=$short/$input/${name}_mc/tombo
+OUTPUT=$short/methylation_calling/${name}_mc/tombo
 
 threads=16
-mem_size='128G'
+mem_size='120G'
 
 #OUTPUT
 #make the output folder
@@ -73,7 +73,7 @@ module load tombo
 
 #
 
-#Pre-process reads
+#Pre-process reads --> will be using basecalled fast5 with fastq, so this step is not needed.
 
 tombo annotate_raw_with_fastqs --fast5-basedir $PBS_JOBFS_fast5 --fastq-filenames $PBS_JOBFS_fastq
 
@@ -83,28 +83,45 @@ tombo annotate_raw_with_fastqs --fast5-basedir $PBS_JOBFS_fast5 --fastq-filename
 
 tombo resquiggle $PBS_JOBFS_fast5 $PBS_JOBFS_ref --processes $threads 
 
-### Remember to copy index file over to NCI.
+#Remember to copy index file over to NCI.
+cd $PBS_JOBFS/fast5
+cp .${folder}.RawGenomeCorrected_000.tombo.index $OUTPUT
 
 #
 
 #Comparing to an alternative 5mC and 6mA model (recommended method)
 cd $PBS_JOBFS/alt_model
 mkdir 5mC 6mA
-tombo test_significance --fast5-basedirs $PBS_JOBFS_fast5 --alternate-bases 5mC 6mA --statistics-file-basename $name # --per-read-statistics-filename plot_stats 
+tombo test_significance --fast5-basedirs $PBS_JOBFS_fast5 --alternate-bases 5mC 6mA --statistics-file-basename $name --per-read-statistics-basename plot
 
-#Outputs the following files to PBS_JOBS: sample.5mC.tombo.stats, sample.6mA.tombo.stats.
-cp ${name}.5mC.tombo.stats 5mC
-cp ${name}.6mA.tombo.stats 6mA
+#Outputs the following files to PBS_JOBS: *.5mC.tombo.stats, *.6mA.tombo.stats.
 
-#Extract sequences Surrounding Modified Positions
-# output the genomic sequence surrounding locations with the largest fraction of modified reads
+#Move stats files to folders, as next step produces same file name
+mv *.5mC.tombo.* 5mC
+mv *.6mA.tombo.* 6mA
+
+#
+
+#Extract sequences Surrounding Modified Positions and write wiggle format and plot
+#output the genomic sequence surrounding locations with the largest fraction of modified reads
+
+#Outputs have the same filename, so moved them to separate folders.
 cd $PBS_JOBFS/alt_model/5mC
-tombo write_most_significant_fasta --statistics-filename sample.5mC.tombo.stats --genome-fasta $PBS_JOBFS_ref 
-cd $PBS_JOBFS/alt_model/6mA 
-tombo write_most_significant_fasta --statistics-filename sample.6mA.tombo.stats --genome-fasta $PBS_JOBFS_ref
+tombo write_most_significant_fasta --statistics-filename ${name}.5mC.tombo.stats --genome-fasta $PBS_JOBFS_ref 
+tombo write_wiggles --fast5-basedirs $PBS_JOBFS_fast5 --wiggle-basename 5mC --wiggle-types fraction signal --statistics-filename ${name}.5mC.tombo.stats
+tombo plot_most_significant --fast5-basedirs $PBS_JOBFS_fast5 --statistics-filename ${name}.5mC.tombo.stats
 
-#Plot it --> can't plot yet because chromosome information is needed for "--genome-locations" flag, but Pst-104E only has contigs, not chromosomes. Plotting code is commented out of test_significance line until fixed.
-#tombo plot_per_read --per-read-statistics-filename plot_stats --genome-locations pcontig_019 --genome-fasta $PBS_JOBFS
+cd $PBS_JOBFS/alt_model/6mA 
+tombo write_most_significant_fasta --statistics-filename ${name}.6mA.tombo.stats --genome-fasta $PBS_JOBFS_ref
+tombo write_wiggles --fast5-basedirs $PBS_JOBFS_fast5 --wiggle-basename 6mA --wiggle-types fraction signal --statistics-filename ${name}.6mA.tombo.stats
+tombo plot_most_significant --fast5-basedirs $PBS_JOBFS_fast5 --statistics-filename ${name}.6mA.tombo.stats
+
+#
+
+#Plot it --> can't plot yet because do not know what information is needed for "--genome-locations" flag, Plotting code is commented out of test_significance line until fixed.
+#tombo plot_per_read --per-read-statistics-filename  ${name}.5mC.tombo.per_read_stats --genome-locations $PBS_JOBFS_ref --genome-fasta $PBS_JOBFS_ref
+#tombo plot_per_read --per-read-statistics-filename  ${name}.6mA.tombo.per_read_stats --genome-locations $PBS_JOBFS_ref --genome-fasta $PBS_JOBFS_ref
+
 
 #Copy back to NCI
 cp -r $PBS_JOBFS/alt_model $OUTPUT
@@ -113,14 +130,23 @@ cp -r $PBS_JOBFS/alt_model $OUTPUT
 
 #Identifying de novo base modifications
 cd $PBS_JOBFS/de_novo
-tombo test_significance --fast5-basedirs $PBS_JOBFS_fast5 --statistics-file-basename de_novo #--per-read-statistics-basename denovo_plot_stats
+tombo test_significance --fast5-basedirs $PBS_JOBFS_fast5 --statistics-file-basename de_novo --per-read-statistics-basename de_novo
+
+#
 
 #Extract sequences Surrounding Modified Positions
 # output the genomic sequence surrounding locations with the largest fraction of modified reads
 tombo write_most_significant_fasta --statistics-filename de_novo.tombo.stats --genome-fasta $PBS_JOBFS_ref
+tombo write_wiggles --fast5-basedirs $PBS_JOBFS_fast5 --wiggle-basename de_novo --wiggle-types fraction signal --statistics-filename de_novo.tombo.stats
+tombo plot_most_significant --fast5-basedirs $PBS_JOBFS_fast5 --statistics-filename de_novo.tombo.stats
 
-#Plot it --> can't plot yet because chromosome information is needed for "--genome-locations" flag, but Pst-104E only has contigs, not chromosomes. Plotting code is commented out of test_significance line until fixed.
-#tombo plot_per_read --per-read-statistics-filename denovo_plot_stats --genome-locations pcontig_019 --genome-fasta $PBS_JOBFS 
+#Plot it --> can't plot yet because do not know what information is needed for "--genome-locations" flag, Plotting code is commented out of test_significance line until fixed.
+#tombo plot_per_read --per-read-statistics-filename de_novo.tombo.stats --genome-locations pcontig_019 --genome-fasta $PBS_JOBFS 
 
 #Copy back to NCI
 cp -r $PBS_JOBFS/de_novo $OUTPUT
+
+#
+
+#delete folders in jobfs
+rm -rf ${PBS_JOBFS}/*
