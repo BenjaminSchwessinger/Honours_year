@@ -9,7 +9,7 @@ set -vx
 #define the input and output directories
 seqrun=Pst79_1
 INPUT=/short/sd34/ap5514/raw_data/${seqrun}_zipped
-OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/${seqrun}
+OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/${seqrun}/
 
 #move data over to JOBFS
 
