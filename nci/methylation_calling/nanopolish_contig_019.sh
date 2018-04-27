@@ -17,7 +17,7 @@ short=/short/sd34/ap5514
 ###
 
 #INPUTS
-input=$short/methylation_calling/input
+input=$short/methylation_calling/input/contig_019/
 contig=pcontig_019
 
 PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${contig}_aln.fastq
@@ -28,7 +28,7 @@ albacore_output_fastq=$input/pcontig_019_aln.fastq
 fast5_files=$input/pcontig_019_aln_fast5.tar.gz
 reference_fasta=$input/ref_pcontig_019.fasta
 
-OUTPUT=$input/${name}_mc/nanopolish
+OUTPUT=$short/methylation_calling/${name}_mc/nanopolish/
 
 threads=16
 mem_size='120G'
