@@ -17,7 +17,7 @@ short=/short/sd34/ap5514
 ###
 
 #INPUTS
-input=$short/methylation_calling/input/whole_genome
+input=$short/methylation_calling/input/Pst_104E/
 
 PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${name}_aln.fastq
 PBS_JOBFS_fast5=$PBS_JOBFS/fast5/${name}_aln_fast5.tar.gz
@@ -32,7 +32,7 @@ index2=$short/methylation_calling/input/whole_genome/Pst_104E_mc/nanopolish/inde
 index3=$short/methylation_calling/input/whole_genome/Pst_104E_mc/nanopolish/index/Pst_104E_aln.fastq.index.gzi
 index4=$short/methylation_calling/input/whole_genome/Pst_104E_mc/nanopolish/index/Pst_104E_aln.fastq.index.readdb
 
-OUTPUT=$input/${name}_mc/nanopolish
+OUTPUT=$short/methylation_calling/${name}_mc/nanopolish
 
 threads=16
 mem_size='120G'
