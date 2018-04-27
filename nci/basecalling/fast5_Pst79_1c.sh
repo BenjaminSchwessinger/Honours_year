@@ -11,6 +11,9 @@ seqrun=Pst79_1
 INPUT=/short/sd34/ap5514/raw_data/${seqrun}_zipped
 OUTPUT=/short/sd34/ap5514/basecalling/basecalled_albacore2110/${seqrun}/
 
+#make the output file
+mkdir $OUTPUT
+
 #move data over to JOBFS
 
 cd $PBS_JOBFS
