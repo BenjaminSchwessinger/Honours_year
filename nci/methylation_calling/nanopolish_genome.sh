@@ -17,7 +17,7 @@ short=/short/sd34/ap5514
 ###
 
 #INPUTS
-input=$short/methylation_calling/input/whole_genome
+input=$short/methylation_calling/input/Pst_104E
 
 PBS_JOBFS_fastq=$PBS_JOBFS/fastq/${name}_aln.fastq
 PBS_JOBFS_fast5=$PBS_JOBFS/fast5/${name}_aln_fast5.tar.gz
@@ -27,7 +27,7 @@ albacore_output_fastq=$input/genome_aln.fastq
 fast5_files=$input/genome_aln_fast5.tar.gz
 reference_fasta=$short/Pst_104_v13_assembly/Pst_104E_v13_ph_ctg.fa
 
-OUTPUT=$input/${name}_mc/nanopolish
+OUTPUT=$short/methylation_calling/${name}_mc/nanopolish
 
 threads=16
 mem_size='120G'
