@@ -12,7 +12,7 @@ module load albacore/2.2.2
 module load minimap2/2.9
 
 #define the input and output directories
-seqrun=20180412_0251_12042018_lambda_cpf1
+seqrun=12042018_lambda_cpf1
 INPUT=/short/xf3/bxs800/MinIon/data/12042018_lambda_cpf1
 OUTPUT=/short/xf3/bxs800/MinIon/analysis/Cpf1/lambda_control/${seqrun}
 threads=16
@@ -33,7 +33,7 @@ cp ${genome_folder}/${genome_file} $PBS_JOBFS/${genome_file}
 
 cd in
 
-cp -r $INPUT/{seqrun}* .
+cp -r $INPUT/* .
 
 #now unzip all the files on the node
 for x in *.tar.gz
@@ -65,10 +65,11 @@ cd $PBS_JOBFS/fastq_only
 
 #load nanopack now only
 module unload albacore/2.2.2
+module unloadd python3/3.6.2
 module load nanopack/14032018
 
 #now loop over the fastq to do stats on the run and map with minimap2
-for x in *.fastq
+for x in *fastq
 do
 out=${x}.${genome}.bam
 out_paf=${x}.${genome}.paf
@@ -81,7 +82,7 @@ cd $PBS_JOBFS/minimap2
 
 #now loop over the mapped file and do some stats
 
-for x in *.bam
+for x in *bam
 do
 samtools index ${x}
 time NanoPlot --bam ${x} --outdir $PBS_JOBFS/nanopack --threads $threads --loglength --prefix ${x}
@@ -91,6 +92,8 @@ samtools view -h ${x} |     awk -F'\t' '{if((/^@/) || (length($10)>10000)){print
 samtools view -h ${x} |     awk -F'\t' '{if((/^@/) || (length($10)>20000)){print $0}}' | samtools stats   | grep '^SN' | cut -f 2- > ${x}.stats_20k.txt
 samtools view -h ${x} |     awk -F'\t' '{if((/^@/) || (length($10)>100000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > ${x}.stats_100k.txt
 samtools view -h ${x} |     awk -F'\t' '{if((/^@/) || (length($10)>200000)){print $0}}' | samtools stats  | grep '^SN' | cut -f 2- > ${x}.stats_200k.txt
+samtools depth -aa ${x} > ${x}.aa.cov
+
 done
 
 
