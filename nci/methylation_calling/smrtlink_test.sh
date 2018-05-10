@@ -19,14 +19,10 @@ short=/short/sd34/ap5514
 #INPUTS
 input=$short/methylation_calling/input/${name}
 
-albacore_output_fastq=$input/pcontig_019_aln.fastq
-fast5_dir=$input/pcontig_019_aln_fast5.tar.gz
 reference_fasta=$input/ref_pcontig_019.fasta
-index=$short/methylation_calling/contig_019_mc/nanopolish/index/*
-
-PBS_JOBFS_fastq=$PBS_JOBFS/fastq/pcontig_019_aln.fastq
-PBS_JOBFS_fast5=$PBS_JOBFS/fast5/pcontig_019_aln_fast5.tar.gz
-PBS_JOBFS_ref=$PBS_JOBFS/ref/ref_pcontig_019.fasta
+bax_files=$short/raw_data/pacbio/pbrun1/SCH1743_lib20160318_0.14_F01/1.bax.h5
+preset=$short/myapps/smrtlink/5.1.0/smrtcmds/bin/preset.xml
+basemod_preset=$short/myapps/smrtlink/5.1.0/smrtcmds/bin/preset_basemod.xml
 
 OUTPUT=$short/methylation_calling/${name}_mc/smrtlink
 
@@ -37,27 +33,31 @@ mem_size='120G'
 #make the output folder
 mkdir -p ${OUTPUT}
 
-
 module load smrtlink
 
 cd $PBS_JOBFS
+subread_dir=${PBS_JOBFS}/subreadset
 
+#Probably don't need this for RSII data
 #Index raw data
-samtools index pathToSubreadBams/*.bam 
-pbindex pathToSubreadBams/*.bam
+#samtools index pathToSubreadBams/*.bam 
+#pbindex pathToSubreadBams/*.bam
 
-#Create the dataset
-dataset create --type SubreadSet subreadset.xml pathToSubreadBams/*.bam 
+#Create the dataset for RSII bax.h5 files
+dataset create --type HdfSubreadSet hdfsubreadset_test.xml $bax_files
+pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_hdfsubread_to_subread --preset-xml preset.xml \
+-e eid_hdfsubread:hdfsubreadset_test.xml -o $subread_dir
+
+#make a symbolic link to the suubreadset file
+subreadset=${subread_dir}/
 
 #Index reference genome
-samtools faidx genome.fasta
+samtools faidx $reference_fasta
 
 #Create ReferenceSet
-dataset create --type ReferenceSet genome.referenceset.xml genome.fasta
+dataset create --type ReferenceSet contig_019.referenceset.xml $reference_fasta
 
 #Run the resequencing pipeline
 pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.ds_modification_detection \
--e eid_subread:subreadset.xml -e eid_ref_dataset:genome.referenceset.xml \
---preset-xml preset.xml --preset-xml preset_basemod.xml -o $OUTPUT
-
-
+-e eid_subread:subreadset_test.xml -e eid_ref_dataset:contig_019.referenceset.xml \
+--preset-xml $preset --preset-xml $basemod_preset -o $OUTPUT
