@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -P sd34
 #PBS -q normal
-#PBS -l walltime=24:00:00
-#PBS -l mem=120GB
+#PBS -l walltime=1:00:00
+#PBS -l mem=100GB
 #PBS -l ncpus=16
 #PBS -l jobfs=200GB
 
@@ -20,14 +20,14 @@ short=/short/sd34/ap5514
 input=$short/methylation_calling/input/${name}
 
 reference_fasta=$input/ref_pcontig_019.fasta
-bax_files=$short/raw_data/pacbio/pbrun1/SCH1743_lib20160318_0.14_F01/1.bax.h5
+bax_files=$short/raw_data/pacbio/contig_019_bax/*
 preset=$short/myapps/smrtlink/5.1.0/smrtcmds/bin/preset.xml
 basemod_preset=$short/myapps/smrtlink/5.1.0/smrtcmds/bin/preset_basemod.xml
 
-OUTPUT=$short/methylation_calling/${name}_mc/smrtlink
+OUTPUT=$short/methylation_calling/${name}_mc/smrtlink/pbsmrtpipe
 
 threads=16
-mem_size='120G'
+mem_size='420G'
 
 #OUTPUT
 #make the output folder
@@ -37,27 +37,30 @@ module load smrtlink
 
 cd $PBS_JOBFS
 subread_dir=${PBS_JOBFS}/subreadset
-
-#Probably don't need this for RSII data
-#Index raw data
-#samtools index pathToSubreadBams/*.bam 
-#pbindex pathToSubreadBams/*.bam
+mkdir $subread_dir
 
 #Create the dataset for RSII bax.h5 files
-dataset create --type HdfSubreadSet hdfsubreadset_test.xml $bax_files
-pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_hdfsubread_to_subread --preset-xml preset.xml \
--e eid_hdfsubread:hdfsubreadset_test.xml -o $subread_dir
+time dataset create --type HdfSubreadSet hdfsubreadset.xml $bax_files
+time pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_hdfsubread_to_subread --preset-xml $preset \
+-e eid_hdfsubread:hdfsubreadset.xml -o $subread_dir
 
-#make a symbolic link to the suubreadset file
-subreadset=${subread_dir}/
+#make a symbolic link to the suubreadset and referenceset files
+subreadset=${subread_dir}/tasks/pbcoretools.tasks.gather_subreadset-1/file.subreadset.xml
+referenceset=${PBS_JOBFS}/contig_019.referenceset.xml
 
 #Index reference genome
-samtools faidx $reference_fasta
+cp $reference_fasta $PBS_JOBFS
+ref=${PBS_JOBFS}/ref_pcontig_019.fasta
+samtools faidx $ref
 
 #Create ReferenceSet
-dataset create --type ReferenceSet contig_019.referenceset.xml $reference_fasta
+dataset create --type ReferenceSet $referenceset $ref
 
 #Run the resequencing pipeline
-pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.ds_modification_detection \
--e eid_subread:subreadset_test.xml -e eid_ref_dataset:contig_019.referenceset.xml \
+time pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.ds_modification_detection \
+-e eid_subread:$subreadset -e eid_ref_dataset:$referenceset \
 --preset-xml $preset --preset-xml $basemod_preset -o $OUTPUT
+
+#copy miscellaneous (hdfsubseatset, subreadset, referenceset) back to nci
+cp $referenceset $OUTPUT
+cp hdfsubreadset.xml $OUTPUT
