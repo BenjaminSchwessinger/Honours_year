@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -P sd34
 #PBS -q normal
-#PBS -l walltime=1:00:00
-#PBS -l mem=100GB
+#PBS -l walltime=3:00:00
+#PBS -l mem=120GB
 #PBS -l ncpus=16
 #PBS -l jobfs=200GB
 
