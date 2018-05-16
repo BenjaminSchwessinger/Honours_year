@@ -51,12 +51,12 @@ referenceset=${PBS_JOBFS}/genome.referenceset.xml
 #Index reference genome
 cp $reference_fasta $PBS_JOBFS
 ref=${PBS_JOBFS}/Pst_104E_v13_ph_ctg.fa
-samtools faidx $ref
+time samtools faidx $ref
 
 #Create ReferenceSet
-dataset create --type ReferenceSet $referenceset $ref
+time dataset create --type ReferenceSet $referenceset $ref
 
-#Run the resequencing pipeline
+#Run the modification detection pipeline
 time pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.ds_modification_detection \
 -e eid_subread:$subreadset -e eid_ref_dataset:$referenceset \
 --preset-xml $preset --preset-xml $basemod_preset -o $OUTPUT
