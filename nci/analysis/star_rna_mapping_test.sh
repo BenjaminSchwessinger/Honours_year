@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -P sd34 
 #PBS -q normal 
-#PBS -l walltime=24:00:00,mem=63GB
+#PBS -l walltime=1:00:00,mem=63GB
 #PBS -l ncpus=16
-#PBS -l jobfs=300GB
+#PBS -l jobfs=200GB
 
 #Testing STAR RNA-mapping on subset of Pst_104E data (only germinated spores (GS)).
 
@@ -13,7 +13,7 @@ genome=Pst_104E_v13_ph_ctg
 
 #variables
 DATA=${short}/trimmed_data/RNA/inhouse/
-GENOME=${short}/Pst_104_v13_assembly/${genome}.fa
+GENOME=${short}/analysis/star_genome/Pst_104E_v13/
 OUTPATH=${short}/analysis/rna_mapping_output/gs_file_test
 PBS_G=genome
 GFFPATH=${short}/analysis/gene_model_gff_files/
@@ -21,15 +21,16 @@ GFFPATH=${short}/analysis/gene_model_gff_files/
 #load modules
 module load samtools
 module load star
+module load stringtie
 
 #here the job starts
 set -vx
 mkdir ${OUTPATH}
 cd $PBS_JOBFS
 mkdir $PBS_G
-cp $GFFPATH/*anno.gff3 .
-cp $GENOME $PBS_JOBFS/$PBS_G/
-cp $DATA/[GS]*.paired*.gz ./	 # test only on GS (germinated spores) data 
+cp $GFFPATH/${genome}_combined_sorted_anno.gff3 .
+cp $GENOME/* $PBS_JOBFS/$PBS_G/
+cp $DATA/[GS]*.paired*.gz ./
 wait
 ls
 
@@ -41,12 +42,16 @@ do
 len=${#paired_1[i]}
 outfolder=${paired_1[i]:0:len-13}
 mkdir ${outfolder}
-STAR --runMode alignReads --runThreadN 16 --genomeDir ${PBS_G} --readFilesCommand gunzip -c --readFilesIn ${paired_1[i]} ${paired_2[i]} --outFilterType BySJout --outFilterMultimapNmax 20 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --alignIntronMin 20 --alignIntronMax 10000 --alignMatesGapMax 1000000  --outFileNamePrefix ${outfolder}/${outfolder} --outSAMtype BAM SortedByCoordinate --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --quantMode GeneCounts 
+
+#run STAR aligner
+STAR --runMode alignReads --runThreadN 16 --genomeDir ${PBS_G} --readFilesCommand gunzip -c --readFilesIn ${paired_1[i]} ${paired_2[i]} --outFilterType BySJout --outFilterMultimapNmax 20 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --alignIntronMin 20 --alignIntronMax 10000 --alignMatesGapMax 1000000 --outFileNamePrefix ${outfolder}/${outfolder} --outSAMtype BAM SortedByCoordinate --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --quantMode GeneCounts
+
+#run stringtie on STAR output
 cd ${outfolder}
 for bam in *.bam
-do 
+do
 outname=$(echo $bam | cut -f1 -d .)
-stringtie -p 16 -e -G ../${genome}.anno.gff3 -l ${outname} -o ${outname}.stringtie.gtf ${bam} 
+stringtie -p 16 -e -G ../${genome}_combined_sorted_anno.gff3 -l ${outname} -o ${outname}.stringtie.gtf ${bam}
 done
 cd ../
 done
@@ -55,8 +60,8 @@ mkdir stringtie
 mv *001/*.stringtie.gtf stringtie
 cd stringtie
 ls * > stringtie_mergelist.txt
-stringtie --merge -p 16 -G ../${genome}.anno.gff3 -o ${genome}.stringtie_merged.gtf stringtie_mergelist.txt
-gffcompare -r ../${genome}.anno.gff3 -G -o gffcomparemerged ${genome}.stringtie_merged.gtf
+stringtie --merge -p 16 -G ../${genome}_combined_sorted_anno.gff3 -o ${genome}.stringtie_merged.gtf stringtie_mergelist.txt
+gffcompare -r ../${genome}_combined_sorted_anno.gff3 -G -o gffcomparemerged ${genome}.stringtie_merged.gtf
 mv ../*001/*.bam .
 for bam in *.bam
 do
@@ -67,4 +72,3 @@ cd ${PBS_JOBFS}
 rm -r $PBS_G
 cp -r * ${OUTPATH}
 echo "STAR done" 1>&2
-
