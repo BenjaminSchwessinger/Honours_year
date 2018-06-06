@@ -5,7 +5,7 @@
 #PBS -l ncpus=16
 #PBS -l jobfs=420GB
 
-#Script to run RNA mapping on all trimmed data files using STAR.
+#Script to run RNA mapping on all trimmed data files using STAR on the combined (ph) genome.
 
 #set all your variables here
 short=/short/sd34/ap5514/
@@ -13,7 +13,7 @@ genome=Pst_104E_v13_ph_ctg
 
 #variables
 DATA=${short}/trimmed_data/RNA/inhouse/
-GENOME=${short}/analysis/star_genome/Pst_104E_v13/
+GENOME=${short}/analysis/star_genome/Pst_104E_v13_ph/
 OUTPATH=${short}/analysis/rna_mapping_output/${genome}
 PBS_G=genome
 GFFPATH=${short}/analysis/gene_model_gff_files/
