@@ -1,7 +1,0 @@
-.gitignore
-output
-output/*
-*/*.[eo]*
-../methylation_calling/.tombo_contig_019.sh.e6207337.swp
-fisher/methylation/Parametric_tests.ipynb
-fisher/methylation/Non-Parametric_Tests.ipynb
