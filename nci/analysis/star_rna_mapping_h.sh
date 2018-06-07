@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -P sd34 
 #PBS -q normal 
-#PBS -l walltime=36:00:00,mem=64GB
+#PBS -l walltime=48:00:00,mem=88GB
 #PBS -l ncpus=16
-#PBS -l jobfs=200GB
+#PBS -l jobfs=420GB
 
 #Script to run RNA mapping on all trimmed data files using STAR on the haplotig (h) genome.
 
@@ -14,7 +14,7 @@ genome=Pst_104E_v13_h_ctg
 #variables
 DATA=${short}/trimmed_data/RNA/inhouse/
 GENOME=${short}/analysis/star_genome/Pst_104E_v13_h/
-OUTPATH=${short}/analysis/rna_mapping_output/${genome}
+OUTPATH=${short}/analysis/rna_mapping_output/try_2/${genome}
 PBS_G=genome
 GFFPATH=${short}/analysis/gene_model_gff_files/
 
