@@ -9,7 +9,7 @@
 set -vx
 
 ##this is a script to do methylation-calling on PacBio sequence data on contig_019 of the Pst-104E genome.
-
+# The contig_019_bax folder contains run1_f1.bax.h5  run1_f2.bax.h5  run1_f3.bax.h5  run3_d2.bax.h5 , which were the smallest bax files to test.
 
 #define some variables at the start
 #give this job a name
@@ -20,7 +20,7 @@ short=/short/sd34/ap5514
 input=$short/methylation_calling/input/${name}
 
 reference_fasta=$input/ref_pcontig_019.fasta
-bax_files=$short/raw_data/pacbio/contig_019_bax/*
+bax_files=$short/raw_data/pacbio/contig_019_bax/* # this folder should have a subset of all bax files, I've used the smallest 4 files.
 preset=$short/myapps/smrtlink/5.1.0/smrtcmds/bin/preset.xml
 basemod_preset=$short/myapps/smrtlink/5.1.0/smrtcmds/bin/preset_basemod.xml
 
