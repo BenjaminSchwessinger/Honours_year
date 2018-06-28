@@ -14,7 +14,7 @@ genome=Pst_104E_v13_p_ctg
 #variables
 DATA=${short}/trimmed_data/RNA/inhouse/
 GENOME=${short}/analysis/star_genome/Pst_104E_v13_p/
-OUTPATH=${short}/analysis/rna_mapping_output/try_2/${genome}
+OUTPATH=${short}/analysis/rna_mapping_output/${genome}
 PBS_G=genome
 GFFPATH=${short}/analysis/gene_model_gff_files/
 
